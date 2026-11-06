@@ -78,20 +78,22 @@ def create_app(frontend_dir: Path = FRONTEND_DIR) -> FastAPI:
             })
         return {"status": "ready", "model_ready": engine.model_ready()}
 
+    @application.post("/api/analyze-snapshot")
     @application.post("/api/analyze-cloud")
-    async def analyze_cloud(request: Request):
+    async def analyze_snapshot(request: Request):
+        is_cloud = request.url.path.endswith("-cloud")
         def error(code: int, name: str, message: str):
             return JSONResponse(status_code=code, content={"error": name, "message": message})
 
-        if not cloud_ai.enabled():
+        if is_cloud and not cloud_ai.enabled():
             return error(503, "cloud_disabled", "Cloud AI is off. Local analysis is available.")
-        if not cloud_ai.available():
+        if is_cloud and not cloud_ai.available():
             return error(503, "cloud_unavailable", "Cloud AI is not configured. Use local analysis.")
         origin = request.headers.get("origin")
         if origin and origin.rstrip("/") != str(request.base_url).rstrip("/"):
             return error(403, "origin_denied", "Use the app on the same server.")
-        if request.headers.get("x-confirm-cloud") != "true":
-            return error(403, "confirmation_required", "Confirm sending one image before using Cloud AI.")
+        if request.headers.get("x-confirm-cloud" if is_cloud else "x-confirm-photo") != "true":
+            return error(403, "confirmation_required", "Confirm this one-image request before continuing.")
         if request.headers.get("content-type", "").split(";")[0].strip().lower() != "image/jpeg":
             return error(415, "bad_frame", "Send one JPEG image.")
         length = request.headers.get("content-length")
@@ -110,6 +112,8 @@ def create_app(frontend_dir: Path = FRONTEND_DIR) -> FastAPI:
                     payload.extend(chunk)
             async with request.app.state.inference_slot:
                 local = await run_in_threadpool(analyze_jpeg, bytes(payload))
+            if not is_cloud:
+                return local
             if not local["face"]:
                 return {"face": False, "label": None, "emoji": "",
                         "reason": "No face detected. No image was sent to the external service."}
@@ -120,6 +124,8 @@ def create_app(frontend_dir: Path = FRONTEND_DIR) -> FastAPI:
         except ValueError:
             return error(400, "bad_frame", "The snapshot is not a valid supported JPEG.")
         except Exception:
+            if not is_cloud:
+                return error(503, "snapshot_unavailable", "Local photo analysis failed. Discard or retry the capture.")
             return error(502, "cloud_unavailable", "Cloud AI is unavailable. No automatic retry was made. Use local analysis.")
         finally:
             payload.clear()

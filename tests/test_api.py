@@ -15,8 +15,8 @@ from backend import main
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(main.engine, "_ready", False)
     monkeypatch.setenv("CLOUD_AI_ENABLED", "false")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("OPENROUTER_MODEL", raising=False)
     with TestClient(main.create_app(tmp_path)) as test_client:
         yield test_client
 
@@ -58,8 +58,8 @@ def test_cloud_disabled_or_unconfigured(client, monkeypatch, enabled, status, er
 @pytest.fixture
 def cloud_client(client, monkeypatch):
     monkeypatch.setenv("CLOUD_AI_ENABLED", "true")
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-only-key")
-    monkeypatch.setenv("ANTHROPIC_MODEL", "test-only-model")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-only-key")
+    monkeypatch.setenv("OPENROUTER_MODEL", "test-only-model")
     return client
 
 
@@ -187,3 +187,52 @@ def test_health_responds_while_model_thread_is_busy(client, monkeypatch):
         worker.join(timeout=6)
     assert not worker.is_alive()
     assert responses[0].status_code == 200
+
+
+PHOTO_HEADERS = {"content-type": "image/jpeg", "x-confirm-photo": "true"}
+
+
+def test_local_photo_works_with_cloud_disabled_and_no_face(client, monkeypatch):
+    async def forbidden(_):
+        pytest.fail("Local photo cards must never use cloud AI")
+    monkeypatch.setattr(main.cloud_ai, "analyze_snapshot", forbidden)
+    response = client.post("/api/analyze-snapshot", content=jpeg(), headers=PHOTO_HEADERS)
+    assert response.status_code == 200
+    assert response.json() == {"face": False, "frame": {"width": 320, "height": 240}}
+
+
+def test_local_photo_analyzes_exact_decoded_frame(client, monkeypatch):
+    payload = jpeg()
+    received = []
+    def analyze(frame):
+        received.append(frame)
+        return {"face": True, "label": "neutral", "emoji": main.engine.EMOJI["neutral"],
+                "confidence": 60.0, "scores": {"neutral": 60.0},
+                "frame": {"width": 320, "height": 240},
+                "box": {"x": 10, "y": 20, "width": 50, "height": 50}}
+    monkeypatch.setattr(main.engine, "analyze_frame", analyze)
+    response = client.post("/api/analyze-snapshot", content=payload, headers=PHOTO_HEADERS)
+    assert response.status_code == 200 and response.json()["label"] == "neutral"
+    assert len(received) == 1
+    assert np.array_equal(received[0], main.decode_jpeg(payload))
+
+
+@pytest.mark.parametrize("body,headers,status", [
+    (b"bad", PHOTO_HEADERS, 400),
+    (b"", PHOTO_HEADERS, 400),
+    (b"bad", {"content-type": "image/jpeg"}, 403),
+    (b"bad", {**PHOTO_HEADERS, "origin": "https://elsewhere.invalid"}, 403),
+    (b"bad", {**PHOTO_HEADERS, "content-type": "image/png"}, 415),
+    (b"bad", {**PHOTO_HEADERS, "content-length": str(main.MAX_FRAME_BYTES + 1)}, 413),
+], ids=["bad-jpeg", "empty", "no-consent", "wrong-origin", "wrong-type", "oversize"])
+def test_local_photo_validation(client, body, headers, status):
+    assert client.post("/api/analyze-snapshot", content=body, headers=headers).status_code == status
+
+
+def test_local_photo_failure_is_safe(client, monkeypatch):
+    def fail(_):
+        raise RuntimeError("private diagnostic")
+    monkeypatch.setattr(main.engine, "analyze_frame", fail)
+    response = client.post("/api/analyze-snapshot", content=jpeg(), headers=PHOTO_HEADERS)
+    assert response.status_code == 503 and response.json()["error"] == "snapshot_unavailable"
+    assert "private diagnostic" not in response.text

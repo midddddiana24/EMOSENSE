@@ -46,13 +46,25 @@ macOS/Linux:
 
 Open **http://127.0.0.1:8000**. Do not open the HTML file directly. First warmup may download model weights into DeepFace's cache; frames are never cached. An optional `DEEPFACE_HOME` environment variable changes the model-cache location. Keep the terminal open; Ctrl+C stops the server.
 
-The 3D scanner is decorative. Startup progress reports actual backend connection and model warmup. Start camera opens the participation notice; camera permission is requested only after agreement. Stop camera, page exit, and tab hiding release tracks. Reduce effects disables decorative motion for the session; system reduced-motion preferences are honored automatically. How to use expands the short guide.
+The cream-and-ink interface includes five original illustrated expression mascots. Their pupils follow the pointer within bounded movement, and the mascot matching a stable local result rises into view. Clicking a mascot only waves; it never changes a classification. No mascot is selected for uncertain or no-face results. Optional scripted captions can be dismissed or muted; they are not AI advice or statements about your feelings.
+
+Startup progress reports actual backend connection and model warmup. Start camera opens the participation notice; camera permission is requested only after agreement. Stop camera, page exit, and tab hiding release tracks. Reduce effects disables decorative motion for the session; system reduced-motion preferences are honored automatically. How it works expands the short guide.
+
+## Local photo cards
+
+Start the camera, choose **Photo card**, agree to capture, then choose **Capture & preview**. One frozen JPEG is analyzed by the same local pipeline at `/api/analyze-snapshot`. Its result determines the card, independently of the smoothed live result. No face blocks card creation; uncertain uses a separate template. The preview is mirrored like the webcam, without cropping faces, and includes the estimate notice.
+
+Choose **Download PNG** to save a 1080 x 1350 card to your device. Retake, Discard, Stop, and hiding the tab clear the browser preview and ignore pending work. The server never stores the JPEG or card. This explicit browser download is the sole image-saving feature; it revises the original paper's blanket no-image-saving scope and should be disclosed in the paper. Everyone visible must agree. Cards do not use cloud AI.
 
 ## Optional cloud snapshot
 
-Cloud is off by default. To enable it, copy `backend/.env.example` to `backend/.env` without overwriting any existing settings. Set `CLOUD_AI_ENABLED=true`, and supply your own `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` server-side. Restart the server and reload the page. Never commit `.env` or put credentials in JavaScript.
+Cloud is off by default. This revision uses OpenRouter through HTTPX in place of the original direct Anthropic SDK, as requested. To enable it, copy `backend/.env.example` to `backend/.env` without overwriting any existing settings. Set `CLOUD_AI_ENABLED=true`, and supply a replacement private `OPENROUTER_API_KEY` and an `OPENROUTER_MODEL` server-side. Revoke any key pasted into chat; never reuse it here. Restart the server and reload the page. Never commit `.env` or put credentials in JavaScript. Local mode needs no API key.
 
-Every snapshot requires its own warning and confirmation. The backend rejects oversized/invalid images and locally checks for a face before making one Anthropic request. No automatic retries occur. Local frame sending pauses while the cloud request is pending and resumes afterward. A snapshot result is separate from live scores. Provider retention and charges may apply; an already-sent image cannot be recalled. Cancelling before confirmation sends nothing externally.
+Every snapshot requires its own warning and confirmation. The backend rejects oversized/invalid images and locally checks for a face. Only then does it fetch the public model catalog and allow the configured `:free` model if it currently advertises image input, text output, and zero prices. The example model is a configuration suggestion, not a promise of ongoing availability. A missing, paid, or incompatible model fails closed.
+
+The single image-bearing Responses API request sets zero provider price ceilings, disables provider fallbacks, requests no data collection, and sets `store:false`. No automatic retry or paid-model fallback occurs. Free quotas, eligible providers, and model availability can prevent a request from succeeding; no free key is bundled or obtained from third parties. See the official [Responses API](https://openrouter.ai/docs/api/reference/responses/overview) and [provider-routing documentation](https://openrouter.ai/docs/guides/routing/provider-selection). These safeguards have mocked automated coverage; live provider acceptance is unverified.
+
+Local frame sending pauses while the cloud request is pending and resumes afterward. A snapshot result is separate from live scores. OpenRouter and downstream provider policies apply; the app cannot guarantee external retention behavior or recall an already-sent image. Cancelling before confirmation sends nothing externally.
 
 ## Checks
 
@@ -71,16 +83,16 @@ On macOS/Linux substitute `./venv/bin/python`. The WebSocket check requires a ru
 - **Model unavailable:** check first-run internet access, model-cache permissions, and the Python environment. Retry startup after correcting the cause.
 - **Camera denied/missing/busy:** allow camera access in browser site settings, connect a webcam, or close other camera applications.
 - **No face/uncertain:** try frontal positioning and even lighting. Do not force a classification to obtain a result.
-- **Cloud off/unavailable:** check the enable flag, key, model access, and connectivity. Local mode needs no API key.
+- **Cloud off/unavailable:** check the enable flag, replacement key, current free vision-model availability, quotas, eligible providers, and connectivity. A zero-price request may have no eligible endpoint. Local mode needs no API key.
 - **ModuleNotFoundError: backend:** run commands from the repository root, not its parent or `backend` folder.
 - **Old styles:** hard-refresh the browser after an update.
 
 ## Privacy and limitations
 
-No accounts, database, frame persistence, or frame logging. Frames remain in memory; external transmission occurs only for a separately confirmed cloud snapshot. Do not include non-consenting people in the camera view. This is an automated estimate of visible features and may be wrong; it does not establish a person's true feelings or mental state.
+No accounts, database, server frame persistence, or frame logging. Frames remain in memory; transmission outside this app's local server occurs only for a separately confirmed cloud snapshot. Only an explicit photo-card download saves an image on the user's device. Do not include non-consenting people in the camera view. This is an automated estimate of visible features and may be wrong; it does not establish a person's true feelings or mental state.
 
 For educational demonstration only. Do not use results for consequential decisions about people. Model scores are not accuracy measurements. No dataset accuracy is claimed. Dataset evaluation, the Chapter IV test-log template, and the final paper-requirements audit remain pending.
 
-Automated browser checks use synthetic video and mocked cloud responses. They do not establish physical webcam behavior, Safari/Firefox compatibility, or live Anthropic access. macOS/Linux setup commands are provided but have not been executed on those platforms.
+Automated browser checks use synthetic video and mocked cloud responses. They do not establish physical webcam behavior, Safari/Firefox compatibility, or live OpenRouter access. macOS/Linux setup commands are provided but have not been executed on those platforms. See `docs/UI_VERIFICATION.md` for evidence and manual checks.
 
-Inter is bundled locally under the license in `frontend/fonts/OFL.txt`. The app has no frontend build step and loads no remote font or animation service.
+Nunito and DM Sans are bundled locally under `frontend/fonts/Nunito-OFL.txt` and `frontend/fonts/DMSans-OFL.txt`. The earlier Inter asset and its license remain available but are not loaded. All mascot SVGs are original code illustrations; reference screenshots are not shipped. The app has no frontend build step and loads no remote font or animation service.

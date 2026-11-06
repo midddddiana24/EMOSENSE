@@ -19,6 +19,7 @@ let effectsReduced = motionPreference.matches;
 
 function updateEffects() {
   const reduced = effectsReduced || motionPreference.matches;
+  if (reduced) resetPupils();
   document.documentElement.dataset.effects = reduced ? "reduced" : "full";
   for (const id of ["effects-toggle", "startup-effects"]) {
     $(id).setAttribute("aria-pressed", String(reduced));
@@ -32,18 +33,64 @@ for (const id of ["effects-toggle", "startup-effects"]) $(id).addEventListener("
 });
 motionPreference.addEventListener("change", updateEffects);
 updateEffects();
-for (const mount of document.querySelectorAll("[data-scanner]")) {
-  mount.append($("scanner-template").content.cloneNode(true));
-  mount.addEventListener("pointermove", (event) => {
-    if (effectsReduced || motionPreference.matches || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    const rect = mount.getBoundingClientRect();
-    mount.style.setProperty("--tilt-x", `${(0.5 - (event.clientY - rect.top) / rect.height) * 16}deg`);
-    mount.style.setProperty("--tilt-y", `${((event.clientX - rect.left) / rect.width - 0.5) * 20}deg`);
+const CAPTIONS = {
+  happy: "A bright little moment.", sad: "No pressure to smile. Take your time.",
+  angry: "A pause is always okay.", surprised: "That?s an expressive look!",
+  neutral: "A quiet expression counts too.", uncertain: "Not sure yet. Try facing the camera.",
+};
+let captionsMuted = false, lastCaptionAt = -Infinity, lastCaptionLabel = null;
+for (const label of LABELS) {
+  const tile = document.createElement("div");
+  tile.className = "mascot-tile"; tile.dataset.label = label; tile.dataset.selected = "false";
+  const button = document.createElement("button"); button.type = "button";
+  button.setAttribute("aria-label", `Greet the ${title(label)} character; does not select a result`);
+  button.innerHTML = Mascots.svg(label, true) + `<strong>${title(label)}</strong>`;
+  button.addEventListener("click", () => {
+    tile.classList.remove("waving"); void tile.offsetWidth; tile.classList.add("waving");
   });
-  mount.addEventListener("pointerleave", () => {
-    mount.style.removeProperty("--tilt-x"); mount.style.removeProperty("--tilt-y");
-  });
+  tile.append(button); $("mascot-crew").append(tile);
 }
+for (const selector of [".startup-crew", ".placeholder-crew"]) {
+  document.querySelector(selector).innerHTML = ["sad", "happy", "surprised"].map((label) => Mascots.svg(label)).join("");
+}
+function selectCrew(label) {
+  for (const tile of document.querySelectorAll(".mascot-tile")) {
+    const selected = tile.dataset.label === label;
+    tile.dataset.selected = String(selected);
+    tile.querySelector("button").setAttribute("aria-label", `${title(tile.dataset.label)} character${selected ? ", current estimate" : ""}; tap to greet, not select`);
+  }
+  if (!label) { $("caption").hidden = true; lastCaptionLabel = null; return; }
+  if (!captionsMuted && label !== lastCaptionLabel && performance.now() - lastCaptionAt >= 10000) {
+    $("caption-text").textContent = CAPTIONS[label]; $("caption").hidden = false;
+    lastCaptionAt = performance.now(); lastCaptionLabel = label;
+  }
+}
+$("caption-dismiss").addEventListener("click", () => { $("caption").hidden = true; });
+$("caption-mute").addEventListener("click", () => {
+  captionsMuted = !captionsMuted;
+  $("caption-mute").setAttribute("aria-pressed", String(captionsMuted));
+  $("caption-mute").textContent = captionsMuted ? "Captions muted" : "Mute captions";
+  if (captionsMuted) $("caption").hidden = true;
+});
+let pointerFrame = null, pointerX = 0, pointerY = 0;
+function resetPupils() {
+  for (const pupil of document.querySelectorAll(".pupils")) pupil.style.transform = "";
+}
+document.addEventListener("pointermove", (event) => {
+  if (event.pointerType === "touch" || effectsReduced || motionPreference.matches || document.hidden) return;
+  pointerX = event.clientX; pointerY = event.clientY;
+  if (pointerFrame !== null) return;
+  pointerFrame = requestAnimationFrame(() => {
+    pointerFrame = null;
+    if (effectsReduced || motionPreference.matches || document.hidden) { resetPupils(); return; }
+    for (const tile of document.querySelectorAll(".mascot-tile")) {
+      const rect = tile.getBoundingClientRect(), dx = pointerX - rect.x - rect.width / 2, dy = pointerY - rect.y - rect.height / 2;
+      const distance = Math.hypot(dx, dy) || 1;
+      tile.querySelector(".pupils").style.transform = `translate(${(dx / distance * 3.5).toFixed(2)}px, ${(dy / distance * 3.5).toFixed(2)}px)`;
+    }
+  });
+});
+document.documentElement.addEventListener("pointerleave", resetPupils);
 function startupStep(id, state, text) {
   $(id).dataset.state = state; $(id).querySelector(".step-state").textContent = text;
 }
@@ -51,6 +98,7 @@ function startupStep(id, state, text) {
 for (const label of LABELS) {
   const row = document.createElement("div");
   row.className = "score-row";
+  row.style.setProperty("--score-color", Mascots.colors[label]);
   row.innerHTML = `<span>${title(label)}</span><div class="bar-track" role="progressbar" aria-label="${title(label)} model score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="No estimate"><div class="bar-fill"></div></div><output>—</output>`;
   $("scores").append(row);
   scoreRows.set(label, row);
@@ -78,6 +126,7 @@ function resetResult(label = "Ready when you are") {
   $("empty-symbol").hidden = false;
   if ($("result-label").textContent !== label) $("result-label").textContent = label;
   $("confidence").textContent = "No estimate yet";
+  $("result-art").replaceChildren(); selectCrew(null);
   bars(); context.clearRect(0, 0, overlay.width, overlay.height);
 }
 async function requestJSON(path, options = {}, timeout = 10000) {
@@ -129,6 +178,9 @@ async function startup() {
 }
 function stopCamera(label = "Idle", message = "Camera stopped. Start again when you’re ready.", tone = "") {
   session++; active = false; pending = false;
+  PhotoCards.stop(); resetPupils();
+  if (pointerFrame !== null) cancelAnimationFrame(pointerFrame);
+  pointerFrame = null;
   if (cloudController) cloudController.abort();
   cloudController = null; cloudBusy = false;
   if (cloudDialog.open) cloudDialog.close();
@@ -198,7 +250,7 @@ async function startCamera() {
   }
 }
 function sendFrame(token) {
-  if (token !== session || !active || pending || cloudBusy || socket?.readyState !== WebSocket.OPEN) return;
+  if (token !== session || !active || pending || cloudBusy || PhotoCards.busy || socket?.readyState !== WebSocket.OPEN) return;
   if (document.hidden) { stopCamera(); return; }
   pending = true;
   responseTimer = setTimeout(() => failConnection(token), RESPONSE_TIMEOUT_MS);
@@ -254,6 +306,8 @@ function showResult(result) {
   const uncertain = result.label === "uncertain";
   $("empty-symbol").hidden = true; $("emoji").textContent = result.emoji;
   if (displayedLabel !== result.label) {
+    $("result-art").innerHTML = Mascots.svg(result.label);
+    selectCrew(result.label);
     $("emoji").classList.remove("pop"); void $("emoji").offsetWidth;
     $("emoji").classList.add("pop"); displayedLabel = result.label;
   }
@@ -269,7 +323,7 @@ function drawBox(data, uncertain) {
   overlay.width = data.frame.width; overlay.height = data.frame.height;
   const { x, y, width, height } = data.box;
   const colors = getComputedStyle(document.documentElement);
-  context.strokeStyle = colors.getPropertyValue(uncertain ? "--amber" : "--cyan").trim();
+  context.strokeStyle = colors.getPropertyValue(uncertain ? "--amber" : "--box").trim();
   context.shadowColor = context.strokeStyle; context.shadowBlur = 8; context.lineWidth = 2;
   context.beginPath(); context.roundRect(x, y, width, height, Math.min(8, width / 2, height / 2)); context.stroke();
 }
@@ -283,15 +337,16 @@ $("consent-form").addEventListener("submit", (event) => {
   dialog.close(); startCamera();
 });
 dialog.addEventListener("close", () => { $("consent-checkbox").checked = false; $("confirm-consent").disabled = true; });
-for (const modal of [dialog, cloudDialog]) modal.addEventListener("keydown", (event) => {
+for (const modal of [dialog, cloudDialog, $("photo-dialog")]) modal.addEventListener("keydown", (event) => {
   if (event.key !== "Tab") return;
-  const controls = [...modal.querySelectorAll("input:not(:disabled), button:not(:disabled)")];
+  const controls = [...modal.querySelectorAll("input:not(:disabled), button:not(:disabled)")].filter((control) => control.getClientRects().length);
   const first = controls[0], last = controls[controls.length - 1];
   if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 });
 function updateCloudButton() {
-  $("cloud-snapshot").disabled = !cloudAvailable || !active || cloudBusy || socket?.readyState !== WebSocket.OPEN;
+  PhotoCards.updateButton();
+  $("cloud-snapshot").disabled = !cloudAvailable || !active || cloudBusy || PhotoCards.busy || socket?.readyState !== WebSocket.OPEN;
 }
 function resetCloud() {
   $("cloud-result").hidden = true; $("cloud-label").textContent = ""; $("cloud-reason").textContent = "";
@@ -303,7 +358,7 @@ function resetCloud() {
   updateCloudButton();
 }
 async function sendCloudSnapshot() {
-  if (!active || !cloudAvailable || cloudBusy || document.hidden || !stream) return;
+  if (!active || !cloudAvailable || cloudBusy || PhotoCards.busy || document.hidden || !stream) return;
   const token = session;
   cloudBusy = true; cloudDialog.close(); updateCloudButton();
   clearTimeout(frameTimer); $("cloud-result").hidden = true;
@@ -348,7 +403,7 @@ async function sendCloudSnapshot() {
     $("cloud-status").dataset.tone = result.face ? "active" : "warning";
     $("cloud-message").textContent = result.face
       ? "One snapshot analyzed. Local analysis continues. Another snapshot needs a new confirmation."
-      : "No face detected in the snapshot. No image was sent to Anthropic.";
+      : "No face detected in the snapshot. No image was sent to OpenRouter.";
   } catch {
     if (token !== session) return;
     $("cloud-status").textContent = "Cloud AI unavailable";
@@ -371,9 +426,17 @@ $("stop-camera").addEventListener("click", () => stopCamera());
 $("retry-startup").addEventListener("click", startup);
 document.addEventListener("visibilitychange", () => {
   document.documentElement.classList.toggle("page-hidden", document.hidden);
+  if (document.hidden) resetPupils();
   if (document.hidden) stopCamera("Idle", "Camera stopped because this tab was hidden. Start again when you’re ready.");
 });
 window.addEventListener("pagehide", () => stopCamera());
 window.addEventListener("beforeunload", () => stopCamera());
 window.addEventListener("offline", () => { if (active) failConnection(session); });
+PhotoCards.init({ video, getSession: () => session, validResult, stopCamera: () => stopCamera(),
+  canCapture: () => active && !cloudBusy && socket?.readyState === WebSocket.OPEN,
+  onBusyChange: () => {
+    clearTimeout(frameTimer); updateCloudButton();
+    if (!PhotoCards.busy && active) frameTimer = setTimeout(() => sendFrame(session), FRAME_INTERVAL_MS);
+  },
+});
 startup();

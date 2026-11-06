@@ -3,7 +3,8 @@
 import asyncio
 import base64
 import json
-from types import SimpleNamespace
+import httpx
+from copy import deepcopy
 
 import pytest
 
@@ -38,50 +39,73 @@ def test_bad_json_is_rejected(text):
 
 def test_disabled_is_default(monkeypatch):
     monkeypatch.delenv("CLOUD_AI_ENABLED", raising=False)
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-only-key")
-    monkeypatch.setenv("ANTHROPIC_MODEL", "test-only-model")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-only-key")
+    monkeypatch.setenv("OPENROUTER_MODEL", "test-only-model")
     assert not cloud_ai.available()
     with pytest.raises(RuntimeError, match="^cloud_unavailable$"):
         asyncio.run(cloud_ai.analyze_snapshot(b"unused"))
 
 
-@pytest.mark.parametrize("failure", [None, "timeout", "provider", "bad-json"])
-def test_sdk_one_attempt_and_sanitized_errors(monkeypatch, failure):
+def catalog():
+    return {"data": [{"id": "test/vision:free", "architecture": {
+        "input_modalities": ["text", "image"], "output_modalities": ["text"]},
+        "pricing": {"prompt": "0", "completion": "0", "request": "0", "image": "0"}}]}
+
+
+@pytest.mark.parametrize("change", ["paid", "text-only", "missing", "price", "unknown-price", "nonfinite"])
+def test_model_validation_fails_closed(change):
+    data = deepcopy(catalog())
+    model = "test/vision:free"
+    if change == "paid": model = "test/vision"
+    if change == "text-only": data["data"][0]["architecture"]["input_modalities"] = ["text"]
+    if change == "missing": data["data"] = []
+    if change == "price": data["data"][0]["pricing"]["image"] = "0.1"
+    if change == "unknown-price": del data["data"][0]["pricing"]["prompt"]
+    if change == "nonfinite": data["data"][0]["pricing"]["completion"] = "NaN"
+    with pytest.raises(ValueError):
+        cloud_ai.validate_model(data, model)
+
+
+@pytest.mark.parametrize("failure", [None, "timeout", "provider", "bad-json", "rate-limit", "paid-model", "incomplete"])
+def test_http_one_image_attempt_and_sanitized_errors(monkeypatch, failure):
     monkeypatch.setenv("CLOUD_AI_ENABLED", "true")
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-only-key")
-    monkeypatch.setenv("ANTHROPIC_MODEL", "test-only-model")
-    options, calls = {}, []
-    class FakeClient:
-        def __init__(self, **kwargs):
-            options.update(kwargs)
-            self.messages = self
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *args):
-            return False
-
-        async def create(self, **kwargs):
-            calls.append(kwargs)
-            if failure == "timeout":
-                raise TimeoutError("private timeout detail")
-            if failure == "provider":
-                raise RuntimeError("private API key or image detail")
-            text = "broken" if failure else '{"label":"neutral","reason":"The mouth appears relaxed."}'
-            return SimpleNamespace(content=[SimpleNamespace(type="text", text=text)])
-
-    monkeypatch.setattr(cloud_ai, "AsyncAnthropic", FakeClient)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-only-key")
+    monkeypatch.setenv("OPENROUTER_MODEL", "test/vision:free")
+    calls, settings = [], {}
+    def handler(request):
+        calls.append(request)
+        if request.method == "GET":
+            assert "authorization" not in request.headers
+            data = catalog()
+            if failure == "paid-model": data["data"][0]["pricing"]["prompt"] = "0.1"
+            return httpx.Response(200, json=data)
+        if failure == "timeout": raise httpx.ReadTimeout("private detail", request=request)
+        if failure == "provider": return httpx.Response(401, json={"error": "private key detail"})
+        if failure == "rate-limit": return httpx.Response(429, json={"error": "rate limit"})
+        text = "broken" if failure == "bad-json" else '{"label":"neutral","reason":"The mouth appears relaxed."}'
+        return httpx.Response(200, json={"status": "incomplete" if failure == "incomplete" else "completed",
+            "output": [{"type": "message", "content": [{"type": "output_text", "text": text}]}]})
+    original = httpx.AsyncClient
+    def factory(**kwargs):
+        settings.update(kwargs)
+        return original(transport=httpx.MockTransport(handler), **kwargs)
+    monkeypatch.setattr(cloud_ai.httpx, "AsyncClient", factory)
     if failure:
         with pytest.raises(RuntimeError, match="^cloud_unavailable$"):
             asyncio.run(cloud_ai.analyze_snapshot(b"test JPEG bytes"))
     else:
         assert asyncio.run(cloud_ai.analyze_snapshot(b"test JPEG bytes"))["label"] == "neutral"
-    assert len(calls) == 1
-    assert options["max_retries"] == 0 and options["timeout"] == 30
-    assert options["api_key"] == "test-only-key" and options["auth_token"] == ""
-    assert options["base_url"] == "https://api.anthropic.com"
-    assert calls[0]["model"] == "test-only-model"
-    source = calls[0]["messages"][0]["content"][0]["source"]
-    assert source["type"] == "base64" and source["media_type"] == "image/jpeg"
-    assert base64.b64decode(source["data"]) == b"test JPEG bytes"
+    assert len(calls) == (1 if failure == "paid-model" else 2)
+    assert settings["timeout"] == 30 and settings["follow_redirects"] is False and settings["trust_env"] is False
+    if failure != "paid-model":
+        post = calls[-1]
+        assert str(post.url) == "https://openrouter.ai/api/v1/responses"
+        assert post.headers["authorization"] == "Bearer test-only-key"
+        body = json.loads(post.content)
+        assert body["model"] == "test/vision:free"
+        assert body["provider"] == {"allow_fallbacks": False, "data_collection": "deny",
+            "max_price": {"prompt": 0, "completion": 0, "request": 0, "image": 0}}
+        assert body["store"] is False
+        source = body["input"][0]["content"][1]["image_url"]
+        assert source.startswith("data:image/jpeg;base64,")
+        assert base64.b64decode(source.split(",", 1)[1]) == b"test JPEG bytes"
