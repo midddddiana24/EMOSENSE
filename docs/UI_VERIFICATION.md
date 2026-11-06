@@ -1,26 +1,31 @@
-# Playful UI verification
+# Beside-camera crew verification
 
 ## Automated evidence
 
-Python: **103 passed**, with one Starlette/AnyIO deprecation warning. All three JavaScript files passed `node --check`. Browser checks used Chromium with an in-memory synthetic red/blue video stream and mocked expression/cloud responses. Real local no-face WebSocket and photo-snapshot endpoints were exercised. Real health/warmup passed during an earlier run of this redesign; the final browser run mocked startup to avoid repeating ML warmup. No live cloud inference was requested.
+Verified 2026-11-06 after moving the crew beside the camera. Python: **103 passed**, with one Starlette/AnyIO deprecation warning. All three JavaScript files passed `node --check`. Browser checks used Chromium with in-memory synthetic video and mocked expression/cloud responses. Real local no-face WebSocket and photo-snapshot endpoints were exercised. Startup was mocked in these layout runs; real health/warmup had passed during the earlier redesign. No live cloud inference was requested.
 
-Viewport checks covered 320, 375, 414, 768, 859, 860, 1024, and 1440 CSS pixels, including landscape dialog bounds. Tested desktop and modal states had no axe WCAG A/AA violations. This is not full accessibility certification.
+The camera controls, current expression, five-character crew, and permanent estimate notice fit together at desktop browser viewports **1280 x 720, 1366 x 768, and 1440 x 900** with default details collapsed. Idle checks also passed at 1024 x 768. Focus view preserved the running stream and previous details state. Caption tests checked immediate stale-text removal, delayed matching captions, dismissal/mute, and unchanged desktop card height.
+
+Viewport checks also covered 320, 375, 414, 768, 859, and 860 CSS pixels, including landscape dialogs. Tested desktop and modal states had no axe WCAG A/AA violations. This is not full accessibility certification. Short/effective zoom-size viewport checks confirm normal scrolling and no horizontal overflow; they do not replace manual browser zoom testing.
 
 - Character startup, actual task progress, inert app/camera until ready, session effects toggle, bounded cursor-following pupils, expandable guide: PASS
-- Startup health/warmup flow, no camera before consent, Escape cancellation, live synthetic-camera/no-face WS, Stop track cleanup, desktop axe, no external UI requests: PASS
+- Desktop idle crew and controls above fold at 1280x720/1366x768/1440x900/1024x768; focus view preserves details state without camera permission: PASS
+- Startup flow (mocked), no camera before consent, Escape cancellation, live synthetic-camera/no-face WS, Stop track cleanup, desktop axe, no external UI requests: PASS
 - 375px layout, reduced motion, dialog axe, focus containment, Cancel without camera: PASS
 - 320/375/414/768px overflow, single-line visible buttons, and dialog bounds (including landscape): PASS
 - Keyboard skip link, 859/860px grid breakpoint, long cloud text wrapping: PASS
 - Permission denied, missing camera, busy camera: PASS
 - Backend offline and model-loading failure: PASS
+- Live desktop crew above fold, matched video/overlay bounds and aspect, focus view preserves stream: PASS
 - Majority smoothing, newest tie, no-face reset, uncertain state, mirrored overlay, one-in-flight backpressure, disconnect cleanup: PASS
 - Simulated tab hiding, pagehide, and late permission after Stop all release tracks: PASS
 - Cloud defaults off; confirm/cancel/Escape; warning accessibility at 320/375/414/768px; one JPEG per confirmation; double-click guard; spinner; local pause/resume; no-face reset; 502 recovery; no retry; Stop ignores late response: PASS
 - Cloud Stop before JPEG encoding completes sends no request; tab hiding aborts pending cloud UI and releases tracks: PASS
 - Mascot selection, greet does not classify, caption cooldown/mute, no-face deselection: PASS
 - Photo consent/cancel, real local no-face blocking, exact capture JPEG, mirrored 1080x1350 PNG download, neutral/uncertain templates and filenames, Retake/Discard memory clearing, Stop/tab hiding ignore late capture: PASS
+- Portrait video + native stream dimension change retain overlay alignment; focus preserves tracks; short/effective zoom-size viewports scroll without horizontal overflow; Stop releases tracks: PASS
 
-Photo tests verified a mirrored 1080 x 1350 PNG from the exact captured JPEG, independent of the live smoothed result, including neutral and uncertain templates. Download test artifacts contain synthetic color blocks, not real webcam images. Backend tests cover consent/origin/type/size validation, no-face handling, error sanitization, current free-vision model validation, one outbound image attempt, zero-price provider controls, and cloud failure paths.
+Photo tests verified a mirrored 1080 x 1350 PNG from the exact captured JPEG, independent of the live smoothed result, including neutral and uncertain templates. Test image artifacts contain synthetic color blocks, not real webcam images. Backend tests cover consent/origin/type/size validation, no-face handling, error sanitization, current free-vision model validation, one outbound image attempt, zero-price provider controls, and cloud failure paths.
 
 ## Repeating checks
 
@@ -41,8 +46,8 @@ Use the manual sequence below for the real webcam. Automated browser checks were
 2. Stop the backend temporarily and verify the retry message. Restore it and retry.
 3. Try Reduce effects and system reduced motion; cursor-following pupils and decorative motion should stop.
 4. Cancel participation consent: no camera permission should be requested. Agree, then allow the camera and verify face-box alignment.
-5. Explore the five expressions; the stable matching mascot should rise. No face clears the result; uncertain selects no mascot.
-6. Click a mascot: it waves without changing the expression result. Mute or dismiss captions.
+5. Confirm that the crew is beside the camera on desktop and inside the result card on mobile. Toggle Focus view without restarting the stream; expand scores/cloud details after exiting. Explore the five expressions; the stable matching mascot should rise. No face clears the result; uncertain selects no mascot.
+6. Click a mascot: it waves without changing the expression result. Mute or dismiss captions. Change expressions during the caption cooldown: old text must clear immediately. Check browser zoom at 200% and allow normal scrolling.
 7. Open Photo card, cancel, and verify nothing was captured. Reopen, consent, capture, inspect the mirrored preview, and explicitly download if desired.
 8. Try Retake, Discard, Stop inside the dialog, tab hiding, and page exit. Confirm camera release and preview clearing. A downloaded file remains under the user's control.
 9. Check camera permission denied, no camera, and another app holding the device.

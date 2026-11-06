@@ -33,15 +33,27 @@ for (const id of ["effects-toggle", "startup-effects"]) $(id).addEventListener("
 });
 motionPreference.addEventListener("change", updateEffects);
 updateEffects();
+$("focus-view").addEventListener("click", () => {
+  const focused = $("app").classList.toggle("focus-view");
+  $("focus-view").setAttribute("aria-pressed", String(focused));
+  $("focus-view").textContent = focused ? "Exit Focus view" : "Focus view";
+});
+function updateVideoRatio() {
+  if (video.videoWidth && video.videoHeight && active) {
+    $("video-wrap").style.setProperty("--video-ratio", video.videoWidth / video.videoHeight);
+  }
+}
+video.addEventListener("resize", updateVideoRatio);
 const CAPTIONS = {
   happy: "A bright little moment.", sad: "No pressure to smile. Take your time.",
-  angry: "A pause is always okay.", surprised: "That?s an expressive look!",
+  angry: "A pause is always okay.", surprised: "That's an expressive look!",
   neutral: "A quiet expression counts too.", uncertain: "Not sure yet. Try facing the camera.",
 };
-let captionsMuted = false, lastCaptionAt = -Infinity, lastCaptionLabel = null;
+let captionsMuted = false, lastCaptionAt = -Infinity, crewLabel = null, captionTimer;
 for (const label of LABELS) {
   const tile = document.createElement("div");
   tile.className = "mascot-tile"; tile.dataset.label = label; tile.dataset.selected = "false";
+  tile.style.setProperty("--character-color", Mascots.colors[label]);
   const button = document.createElement("button"); button.type = "button";
   button.setAttribute("aria-label", `Greet the ${title(label)} character; does not select a result`);
   button.innerHTML = Mascots.svg(label, true) + `<strong>${title(label)}</strong>`;
@@ -53,24 +65,41 @@ for (const label of LABELS) {
 for (const selector of [".startup-crew", ".placeholder-crew"]) {
   document.querySelector(selector).innerHTML = ["sad", "happy", "surprised"].map((label) => Mascots.svg(label)).join("");
 }
+function hideCaption() {
+  clearTimeout(captionTimer);
+  $("caption").hidden = true; $("caption-text").textContent = "";
+  $("caption-idle").hidden = false;
+  $("caption-idle").textContent = captionsMuted
+    ? "Captions muted. Tap a character to greet it."
+    : "Characters are illustrations. Tap to greet, not select.";
+}
 function selectCrew(label) {
+  crewLabel = label;
   for (const tile of document.querySelectorAll(".mascot-tile")) {
     const selected = tile.dataset.label === label;
     tile.dataset.selected = String(selected);
     tile.querySelector("button").setAttribute("aria-label", `${title(tile.dataset.label)} character${selected ? ", current estimate" : ""}; tap to greet, not select`);
   }
-  if (!label) { $("caption").hidden = true; lastCaptionLabel = null; return; }
-  if (!captionsMuted && label !== lastCaptionLabel && performance.now() - lastCaptionAt >= 10000) {
+  $("crew-selection").textContent = LABELS.includes(label) ? `Current estimate: ${title(label)}` : "No character selected";
+  hideCaption();
+  if (captionsMuted || !LABELS.includes(label)) return;
+  // Replace stale captions immediately; delay the new one without moving the layout.
+  const showCaption = () => {
+    if (captionsMuted || crewLabel !== label || document.hidden) return;
     $("caption-text").textContent = CAPTIONS[label]; $("caption").hidden = false;
-    lastCaptionAt = performance.now(); lastCaptionLabel = label;
-  }
+    $("caption-idle").hidden = true; lastCaptionAt = performance.now();
+  };
+  const remaining = Math.max(0, 10000 - (performance.now() - lastCaptionAt));
+  if (remaining) captionTimer = setTimeout(showCaption, remaining);
+  else showCaption();
 }
-$("caption-dismiss").addEventListener("click", () => { $("caption").hidden = true; });
+$("caption-dismiss").addEventListener("click", hideCaption);
 $("caption-mute").addEventListener("click", () => {
   captionsMuted = !captionsMuted;
   $("caption-mute").setAttribute("aria-pressed", String(captionsMuted));
   $("caption-mute").textContent = captionsMuted ? "Captions muted" : "Mute captions";
-  if (captionsMuted) $("caption").hidden = true;
+  if (captionsMuted) hideCaption();
+  else selectCrew(crewLabel);
 });
 let pointerFrame = null, pointerX = 0, pointerY = 0;
 function resetPupils() {
@@ -126,7 +155,7 @@ function resetResult(label = "Ready when you are") {
   $("empty-symbol").hidden = false;
   if ($("result-label").textContent !== label) $("result-label").textContent = label;
   $("confidence").textContent = "No estimate yet";
-  $("result-art").replaceChildren(); selectCrew(null);
+  $("result-art").replaceChildren(); $("result-art").classList.remove("pop"); selectCrew(null);
   bars(); context.clearRect(0, 0, overlay.width, overlay.height);
 }
 async function requestJSON(path, options = {}, timeout = 10000) {
@@ -192,7 +221,7 @@ function stopCamera(label = "Idle", message = "Camera stopped. Start again when 
   stream = null; video.pause(); video.srcObject = null; video.hidden = true;
   capture.width = 0; capture.height = 0;
   overlay.width = 0; overlay.height = 0;
-  $("video-wrap").style.aspectRatio = "";
+  $("video-wrap").style.removeProperty("--video-ratio");
   $("camera-placeholder").hidden = false; $("video-loading").hidden = true;
   $("preview-note").hidden = true; $("camera-badge").textContent = "Camera off";
   $("stop-camera").disabled = true; $("start-camera").disabled = !ready;
@@ -226,7 +255,7 @@ async function startCamera() {
     await video.play();
     if (token !== session) return;
     if (!video.videoWidth || !video.videoHeight) throw new Error("invalid_video");
-    $("video-wrap").style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;
+    updateVideoRatio();
     video.hidden = false; $("camera-placeholder").hidden = true;
     $("video-loading-text").textContent = "Waiting for the first local analysis…";
     $("preview-note").hidden = false;
@@ -307,6 +336,8 @@ function showResult(result) {
   $("empty-symbol").hidden = true; $("emoji").textContent = result.emoji;
   if (displayedLabel !== result.label) {
     $("result-art").innerHTML = Mascots.svg(result.label);
+    $("result-art").classList.remove("pop"); void $("result-art").offsetWidth;
+    $("result-art").classList.add("pop");
     selectCrew(result.label);
     $("emoji").classList.remove("pop"); void $("emoji").offsetWidth;
     $("emoji").classList.add("pop"); displayedLabel = result.label;
@@ -316,7 +347,7 @@ function showResult(result) {
   $("confidence").textContent = `${Math.round(result.confidence)}% top model score · Smoothed over ${history.length} frame${history.length === 1 ? "" : "s"}`;
   bars(result.scores);
   status(uncertain ? "Not sure" : "Face detected", uncertain
-    ? "The expression is unclear or outside the five supported categories."
+    ? "Expression unclear—take your time. It may be outside the five supported categories."
     : "Showing an automated estimate of the largest visible face.", uncertain ? "warning" : "active");
 }
 function drawBox(data, uncertain) {

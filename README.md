@@ -48,6 +48,10 @@ Open **http://127.0.0.1:8000**. Do not open the HTML file directly. First warmup
 
 The cream-and-ink interface includes five original illustrated expression mascots. Their pupils follow the pointer within bounded movement, and the mascot matching a stable local result rises into view. Clicking a mascot only waves; it never changes a classification. No mascot is selected for uncertain or no-face results. Optional scripted captions can be dismissed or muted; they are not AI advice or statements about your feelings.
 
+The crew now lives inside the result panel beside the camera on desktop. The compact heading and collapsed **Show model scores** / **Optional cloud analysis** sections keep the current estimate, all five characters, and camera controls together. **Focus view** hides the introduction and secondary details without stopping the camera; **Exit Focus view** restores them and their previous expanded states. Stop, Photo card, the permanent estimate notice, and educational footer remain available. Short viewports and increased zoom may scroll normally instead of clipping content. On mobile, the result card stacks below the camera with a three-plus-two crew grid.
+
+The active mascot has an outline and check mark, plus a **Current estimate** text label. Captions clear immediately when the displayed expression changes; a matching caption waits for the ten-second cooldown. No-face and uncertain states clear the supported-crew selection. The video wrapper follows actual video dimensions, including stream-resolution changes, so the overlay shares the same bounds.
+
 Startup progress reports actual backend connection and model warmup. Start camera opens the participation notice; camera permission is requested only after agreement. Stop camera, page exit, and tab hiding release tracks. Reduce effects disables decorative motion for the session; system reduced-motion preferences are honored automatically. How it works expands the short guide.
 
 ## Local photo cards

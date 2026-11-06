@@ -365,28 +365,25 @@ app = create_app()
   </section>
   <div id="app" class="app" inert>
     <a class="skip-link" href="#main-content">Skip to camera and results</a>
-    <header class="site-header"><a class="brand" href="/" aria-label="EmoSense home"><span class="brand-mark" aria-hidden="true">e</span>EmoSense<span class="title-dot">.</span></a><div class="header-tools"><span class="badge">Local AI · Real-time</span><button id="effects-toggle" class="effects-button secondary" type="button" aria-pressed="false">Reduce effects</button></div></header>
+    <header class="site-header"><a class="brand" href="/" aria-label="EmoSense home"><span class="brand-mark" aria-hidden="true">e</span>EmoSense<span class="title-dot">.</span></a><div class="header-tools"><span class="badge">Local AI · Real-time</span><button id="effects-toggle" class="effects-button secondary" type="button" aria-pressed="false">Reduce effects</button><button id="focus-view" class="effects-button secondary" type="button" aria-pressed="false" aria-controls="main-content">Focus view</button></div></header>
     <main id="main-content" tabindex="-1">
-      <div class="intro"><div><p class="eyebrow">Five expressions. One curious crew.</p><h1>Make a face.<br>Meet your crew.</h1></div><div class="intro-note"><p>Turn visible expressions into a little character moment. Start, explore, stop. Your choice.</p><details class="quick-guide"><summary>How it works</summary><ol class="pipeline"><li>Webcam</li><li>Face detection</li><li>Expression analysis</li><li>Classification</li><li>Emoji</li></ol><p>Agree before starting. Face the camera in even lighting. Stop any time; hiding the tab also stops the camera. Results estimate visible features, not your real feelings.</p></details></div></div>
+      <div class="intro"><div><h1>Make a face. Meet your crew.</h1><p>Five expressions. One curious crew.</p></div><details class="quick-guide"><summary>How it works</summary><ol class="pipeline"><li>Webcam</li><li>Face detection</li><li>Expression analysis</li><li>Classification</li><li>Emoji</li></ol><p>Agree before starting. Face the camera in even lighting. Stop any time; hiding the tab also stops the camera. Results estimate visible features, not your real feelings.</p></details></div>
       <div class="workspace">
         <section class="card camera-card" aria-labelledby="camera-heading">
           <div class="card-heading"><h2 id="camera-heading">Your camera</h2><span id="camera-badge" class="badge">Camera off</span></div>
-          <div id="video-wrap" class="video-wrap"><video id="video" autoplay playsinline muted aria-label="Mirrored live camera preview" hidden></video><canvas id="overlay" aria-hidden="true"></canvas><div id="camera-placeholder" class="camera-placeholder"><div class="placeholder-crew" aria-hidden="true"></div><h3>Ready, set… express.</h3><p>Your camera is off. Start when you’re ready.</p></div><div id="video-loading" class="video-loading" hidden><span class="spinner" aria-hidden="true"></span><span id="video-loading-text">Starting your camera…</span></div><span id="preview-note" class="preview-note" hidden>Mirrored preview</span></div>
+          <div class="video-stage"><div id="video-wrap" class="video-wrap"><video id="video" autoplay playsinline muted aria-label="Mirrored live camera preview" hidden></video><canvas id="overlay" aria-hidden="true"></canvas><div id="camera-placeholder" class="camera-placeholder"><div class="placeholder-crew" aria-hidden="true"></div><h3>Ready, set… express.</h3><p>Your camera is off. Start when you’re ready.</p></div><div id="video-loading" class="video-loading" hidden><span class="spinner" aria-hidden="true"></span><span id="video-loading-text">Starting your camera…</span></div><span id="preview-note" class="preview-note" hidden>Mirrored preview</span></div></div>
           <div class="controls"><button id="start-camera" class="primary" type="button" disabled>Start camera</button><button id="stop-camera" class="stop-button" type="button" disabled>Stop camera</button><button id="photo-card" class="secondary" type="button" disabled>Photo card</button></div>
           <p id="camera-message" class="helper">Camera off. Review the participation notice to begin.</p>
-          <div class="cloud-controls"><button id="cloud-snapshot" class="secondary" type="button" disabled aria-describedby="cloud-message">Cloud AI snapshot</button><span id="cloud-status" class="badge" role="status">Cloud AI off</span></div><p id="cloud-message" class="small">Optional and off by default. Local analysis needs no cloud service.</p>
-          <p class="privacy-line">No server image storage. Photo cards download only when you choose.</p>
+          <details id="cloud-details" class="secondary-details"><summary>Optional cloud analysis</summary><div class="cloud-controls"><button id="cloud-snapshot" class="secondary" type="button" disabled aria-describedby="cloud-message">Cloud AI snapshot</button><span id="cloud-status" class="badge" role="status">Cloud AI off</span></div><p id="cloud-message" class="small">Optional and off by default. Local analysis needs no cloud service.</p></details>
         </section>
         <section class="card result-card" aria-labelledby="result-heading"><div class="card-heading"><h2 id="result-heading">Expression estimate</h2><span id="result-status" class="badge" role="status">Idle</span></div>
-          <div class="expression"><div id="result-art" aria-hidden="true"></div><div id="emoji" class="emoji" aria-hidden="true"></div><span id="empty-symbol" class="empty-symbol" aria-hidden="true">?</span><h3 id="result-label" aria-live="polite">Ready when you are</h3><p id="confidence">No estimate yet</p></div>
-          <div class="score-heading"><span>Model scores</span><span>Five supported expressions</span></div><div id="scores" class="scores" aria-label="Expression model scores"></div><p class="small">Scores are model estimates, not measured accuracy. Unclear or unsupported expressions appear as “Not sure”.</p>
+          <div class="expression"><div class="expression-art"><div id="result-art" aria-hidden="true"></div><div id="emoji" class="emoji" aria-hidden="true"></div><span id="empty-symbol" class="empty-symbol" aria-hidden="true">?</span></div><div class="expression-copy"><h3 id="result-label" aria-live="polite">Ready when you are</h3><p id="confidence">No estimate yet</p><p id="crew-selection" class="selection-text">No character selected</p></div></div>
+          <section class="crew-section" aria-labelledby="crew-heading"><div class="crew-heading"><h3 id="crew-heading">Your expression crew</h3><button id="caption-mute" class="secondary effects-button" type="button" aria-pressed="false">Mute captions</button></div><div id="mascot-crew" class="mascot-crew"></div><div class="caption-slot"><p id="caption-idle" class="small">Characters are illustrations. Tap to greet, not select.</p><aside id="caption" class="speech-bubble" hidden><p id="caption-text" role="status"></p><button id="caption-dismiss" class="secondary effects-button" type="button">Dismiss</button></aside></div></section>
           <aside class="estimate-notice"><strong>An estimate, not your feelings.</strong><p>This automated estimate uses visible facial features, may be wrong, and does not establish your real feelings.</p></aside>
+          <details id="score-details" class="secondary-details"><summary>Show model scores</summary><div class="score-heading"><span>Model scores</span><span>Five supported expressions</span></div><div id="scores" class="scores" aria-label="Expression model scores"></div><p class="small">Scores are model estimates, not measured accuracy. Unclear or unsupported expressions appear as “Not sure”.</p></details>
           <aside id="cloud-result" class="estimate-notice" hidden aria-labelledby="cloud-result-title"><strong id="cloud-result-title">Cloud snapshot · Not live</strong><p id="cloud-label" aria-live="polite"></p><p id="cloud-reason"></p></aside>
         </section>
       </div>
-      <section class="crew-section" aria-labelledby="crew-heading"><div class="crew-heading"><div><p class="eyebrow">Small faces. Big personalities.</p><h2 id="crew-heading">Meet the expression crew</h2></div><div class="caption-controls"><button id="caption-mute" class="secondary effects-button" type="button" aria-pressed="false">Mute captions</button></div></div><p class="small">Characters are playful illustrations. Only a detected face selects a result.</p>
-        <aside id="caption" class="speech-bubble" hidden><p id="caption-text" role="status"></p><button id="caption-dismiss" class="secondary effects-button" type="button">Dismiss</button></aside><div id="mascot-crew" class="mascot-crew"></div>
-      </section>
     </main>
     <footer><strong>Made for a little expression exploration.</strong><p>For educational demonstration only. Must not be used for consequential decisions about people.</p><p>No accounts or database. Frames stay in memory on the server. You may explicitly download a photo card to your device. Optional cloud snapshots leave this device only after separate confirmation; provider retention may apply.</p></footer>
   </div>
@@ -436,7 +433,7 @@ p { color: var(--muted); }
 .skip-link { position: fixed; z-index: 12; top: var(--s2); left: var(--s2); padding: var(--s2); border: 2px solid var(--border); border-radius: var(--video-radius); background: var(--yellow); color: var(--text); transform: translateY(-200%); }
 .skip-link:focus { transform: none; }
 .site-header,.header-tools,.card-heading,.crew-heading,.score-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
-.site-header { padding: var(--s3) 0; border-bottom: 2px solid var(--border); }
+.site-header { padding: var(--s2) 0; border-bottom: 2px solid var(--border); }
 .brand { display: inline-flex; align-items: center; color: var(--text); text-decoration: none; font: 900 28px var(--font-display); letter-spacing: -.06em; }
 .brand-mark { display: grid; place-items: center; width: 40px; height: 40px; background: var(--yellow); border: 2px solid var(--border); border-radius: 50%; margin-right: var(--s1); font-size: 32px; transform: rotate(-8deg); }
 .title-dot { color: var(--cyan); }
@@ -444,18 +441,22 @@ p { color: var(--muted); }
 .header-tools { flex-wrap: wrap; gap: var(--s1); }
 .effects-button { min-height: 40px; padding: var(--s1) var(--s2); font-size: 12px; box-shadow: none; }
 .effects-button[aria-pressed="true"] { background: var(--sage); color: var(--text); }
-.intro { display: flex; justify-content: space-between; align-items: end; gap: var(--s3); padding: var(--s3) 0; }
+.intro { display: flex; justify-content: space-between; align-items: start; gap: var(--s3); padding: var(--s2) 0; }
+.intro h1 { font-size: clamp(24px, 2.4vw, 32px); letter-spacing: -.03em; }
+.intro > div > p { font-size: 12px; margin-top: var(--s1); }
 .eyebrow { font-size: 12px; color: var(--text); font-weight: 700; margin-bottom: var(--s1); }
-.intro-note { max-width: 350px; font-size: 14px; }
-.quick-guide { margin-top: var(--s2); }
+.quick-guide { max-width: 320px; flex-shrink: 0; font-size: 12px; }
+.quick-guide summary { min-height: 40px; display: list-item; padding: var(--s1) 0; }
 summary { cursor: pointer; color: var(--text); font-weight: 700; }
 .pipeline { padding-left: var(--s3); margin: var(--s2) 0; }
-.workspace { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: var(--s3); align-items: start; }
-.card { min-width: 0; border: 2px solid var(--border); border-radius: var(--card-radius); padding: var(--s3); background: var(--surface); box-shadow: 5px 5px 0 var(--shadow); }
+.workspace { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--s3); align-items: start; margin-bottom: var(--s3); }
+.card { min-width: 0; border: 2px solid var(--border); border-radius: var(--card-radius); padding: var(--s2); background: var(--surface); box-shadow: 5px 5px 0 var(--shadow); }
 .ready .card { animation: rise .35s both; }
 .ready .result-card { animation-delay: .08s; }
-.card-heading { margin-bottom: var(--s2); }
-.video-wrap { position: relative; aspect-ratio: 16 / 10; background: var(--well); overflow: hidden; border: 2px solid var(--border); border-radius: var(--video-radius); }
+.card-heading { margin-bottom: var(--s1); }
+.card-heading h2 { font-size: 21px; }
+.video-stage { display: flex; justify-content: center; background: var(--well); border-radius: var(--video-radius); }
+.video-wrap { position: relative; width: min(100%, calc(clamp(200px, 100dvh - 448px, 440px) * var(--video-ratio, 1.6))); aspect-ratio: var(--video-ratio, 1.6); flex: none; background: var(--well); overflow: hidden; outline: 2px solid var(--border); outline-offset: -2px; border-radius: var(--video-radius); }
 video,#overlay { position: absolute; inset: 0; width: 100%; height: 100%; transform: scaleX(-1); }
 video { object-fit: contain; background: var(--text); }
 #overlay { pointer-events: none; }
@@ -468,22 +469,26 @@ video { object-fit: contain; background: var(--text); }
 .video-loading { background: var(--bg); z-index: 2; font-size: 14px; }
 .spinner { width: 32px; height: 32px; border: 3px solid var(--track); border-top-color: var(--text); border-radius: 50%; animation: spin .8s linear infinite; }
 .preview-note { position: absolute; bottom: var(--s1); left: var(--s1); background: var(--bg); border: 1px solid var(--border); border-radius: var(--pill); padding: var(--s1); font-size: 11px; }
-.controls { display: flex; flex-wrap: wrap; gap: var(--s1); margin-top: var(--s2); }
+.controls { display: flex; flex-wrap: wrap; gap: var(--s1); margin-top: var(--s1); }
 .primary { background: var(--yellow); }
 .stop-button:not(:disabled) { background: var(--coral); }
-.helper { margin-top: var(--s2); min-height: 32px; }
-.privacy-line { border-top: 1px solid var(--track); margin-top: var(--s2); padding-top: var(--s2); }
+.helper { margin-top: var(--s1); min-height: 40px; }
+.secondary-details { margin-top: var(--s1); border-top: 1px solid var(--track); padding-top: var(--s1); font-size: 12px; }
+.secondary-details > summary { min-height: 32px; padding: var(--s1) 0; }
+.secondary-details[open] .score-heading { margin-top: var(--s2); }
 .cloud-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1); margin: var(--s2) 0 var(--s1); }
 .cloud-controls button { min-height: 40px; font-size: 12px; box-shadow: none; }
-.expression { position: relative; text-align: center; padding-bottom: var(--s2); min-height: 176px; }
-#result-art { height: 120px; }
+.expression { display: grid; grid-template-columns: minmax(100px, .8fr) minmax(0, 1fr); align-items: center; gap: var(--s1); min-height: 128px; }
+.expression-art { position: relative; text-align: center; }
+#result-art { height: 128px; }
 #result-art:empty { display: none; }
 #result-art svg { height: 100%; max-width: 100%; }
-.emoji { display: inline-block; font-size: 32px; line-height: 1; position: absolute; right: 12%; top: 64px; }
+.emoji { display: inline-block; font-size: 32px; line-height: 1; position: absolute; right: 0; bottom: var(--s1); }
 .emoji:empty { display: none; }
-.empty-symbol { display: grid; place-items: center; height: 112px; font: 900 88px var(--font-display); color: var(--text); }
-.expression h3 { font-size: 26px; }
+.empty-symbol { display: grid; place-items: center; height: 128px; font: 900 88px var(--font-display); color: var(--text); }
+.expression h3 { font-size: 24px; }
 .expression p { font-size: 12px; margin-top: var(--s1); }
+.expression .selection-text { color: var(--cyan); font-weight: 700; }
 .pop { animation: pop .3s ease-out; }
 .score-heading { font-size: 11px; margin-bottom: var(--s2); }
 .score-heading span:last-child { color: var(--muted); text-align: right; }
@@ -492,25 +497,33 @@ video { object-fit: contain; background: var(--text); }
 .score-row output { text-align: right; font-variant-numeric: tabular-nums; }
 .bar-track { height: 10px; border: 1px solid var(--border); background: var(--bg); border-radius: var(--pill); overflow: hidden; }
 .bar-fill { height: 100%; width: 0; background: var(--score-color, var(--yellow)); transition: width .25s ease-out; }
-.estimate-notice { background: var(--notice); border-radius: var(--video-radius); padding: var(--s2); margin-top: var(--s2); font-size: 12px; }
-.estimate-notice strong { display: block; color: var(--text); margin-bottom: var(--s1); }
+.estimate-notice { background: var(--notice); border-radius: var(--video-radius); padding: var(--s1) var(--s2); margin-top: var(--s1); font-size: 12px; }
+.estimate-notice strong { display: block; color: var(--text); }
 [data-tone="warning"] { color: var(--amber); }
 [data-tone="error"] { color: var(--error); }
 [data-tone="active"] { color: var(--cyan); }
-.crew-section { padding: var(--s4) 0 var(--s3); }
-.crew-heading { margin-bottom: var(--s1); align-items: end; }
-.mascot-crew { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s2); padding-top: var(--s3); }
-.mascot-tile { min-width: 0; position: relative; padding: var(--s2) var(--s1); border: 2px solid transparent; border-radius: var(--card-radius); text-align: center; transition: transform .25s, background .25s; }
-.mascot-tile svg { width: 100%; max-height: 160px; display: block; }
-.mascot-tile[data-selected="true"] { transform: translateY(-8px) scale(1.06); background: var(--surface); border-color: var(--border); box-shadow: 4px 4px 0 var(--shadow); }
-.mascot-tile button { background: none; border: none; padding: 0; width: 100%; box-shadow: none; min-height: 0; white-space: normal; }
+.crew-section { border-top: 1px solid var(--track); padding-top: var(--s1); margin-top: var(--s1); }
+.crew-heading { margin-bottom: var(--s1); }
+.crew-heading h3 { font-size: 16px; }
+.crew-heading .effects-button { padding: var(--s1); }
+.mascot-crew { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s1); padding-top: var(--s1); }
+.mascot-tile { min-width: 0; position: relative; padding: var(--s1) 0; border: 2px solid transparent; border-radius: var(--video-radius); text-align: center; transition: transform .25s, background .25s; }
+.mascot-tile svg { width: 100%; height: 56px; display: block; }
+.mascot-tile[data-selected="true"] { transform: translateY(-4px); background: var(--bg); border-color: var(--character-color); box-shadow: 0 0 0 1px var(--border); }
+.mascot-tile[data-selected="true"]::after { content: '\2713'; position: absolute; top: -8px; right: 0; border-radius: 50%; width: 20px; height: 20px; background: var(--text); color: var(--surface); font: 700 14px/20px var(--font-body); pointer-events: none; }
+.mascot-tile button { background: none; border: none; padding: 0; width: 100%; box-shadow: none; min-height: 48px; white-space: normal; }
 .mascot-tile button:active { transform: none; }
-.mascot-tile strong { display: block; font: 800 18px var(--font-display); }
+.mascot-tile strong { display: block; font: 800 12px/1.5 var(--font-display); }
 .mascot-eyes { transform-box: fill-box; transform-origin: center; animation: blink 7s infinite; }
 .mascot-tile:nth-child(even) .mascot-eyes { animation-delay: 2s; }
 .mascot-tile.waving svg { animation: wave .45s ease-in-out; }
-.speech-bubble { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); background: var(--yellow); border: 2px solid var(--border); border-radius: var(--video-radius); padding: var(--s2); margin-top: var(--s2); }
+.caption-slot { min-height: 72px; display: grid; align-items: center; padding-top: var(--s1); }
+.speech-bubble { display: flex; align-items: center; justify-content: space-between; gap: var(--s1); background: var(--yellow); border: 2px solid var(--border); border-radius: var(--video-radius); padding: var(--s1); font-size: 12px; }
 .speech-bubble p { color: var(--text); font-weight: 600; }
+.speech-bubble .effects-button { padding: var(--s1); }
+.focus-view .intro, .focus-view .secondary-details, .focus-view #cloud-result { display: none; }
+.focus-view .workspace { margin-top: var(--s2); }
+.focus-view .video-wrap { width: min(100%, calc(clamp(200px, 100dvh - 320px, 560px) * var(--video-ratio, 1.6))); }
 footer { border-top: 2px solid var(--border); padding: var(--s3) 0 var(--s4); display: grid; gap: var(--s1); }
 footer strong { font-family: var(--font-display); font-size: 18px; }
 footer p { max-width: 95ch; }
@@ -561,18 +574,24 @@ dialog li + li { margin-top: var(--s1); }
   .app { padding: 0 var(--s2); }
   .workspace { grid-template-columns: minmax(0, 1fr); }
   .intro { align-items: start; }
-  .intro h1 { font-size: 42px; }
-  .intro-note { max-width: 260px; }
-  .video-wrap { aspect-ratio: 4 / 3; }
+  .intro h1 { font-size: 28px; }
+  .video-wrap, .focus-view .video-wrap { width: 100%; max-width: calc(440px * var(--video-ratio, 1.6)); }
 }
 @media (max-width: 600px) {
   .intro { flex-direction: column; gap: var(--s2); }
-  .intro-note { max-width: 100%; }
+  .quick-guide { max-width: 100%; flex-shrink: 1; }
   .site-header { flex-wrap: wrap; padding: var(--s2) 0; }
   .header-tools { width: 100%; }
-  .mascot-crew { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s1); }
-  .crew-heading { align-items: start; flex-direction: column; }
-  .mascot-tile strong { font-size: 15px; }
+  .mascot-crew { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mascot-tile svg { height: 64px; }
+  .mascot-tile strong { font-size: 14px; }
+  .caption-slot { min-height: 88px; }
+}
+@media (min-width: 860px) and (max-width: 1100px) {
+  .app { padding: 0 var(--s2); }
+  .workspace { gap: var(--s2); }
+  .mascot-crew { gap: 0; }
+  .crew-heading h3 { font-size: 15px; }
 }
 @media (max-width: 440px) {
   .card, dialog { padding: var(--s2); }
@@ -808,15 +827,27 @@ for (const id of ["effects-toggle", "startup-effects"]) $(id).addEventListener("
 });
 motionPreference.addEventListener("change", updateEffects);
 updateEffects();
+$("focus-view").addEventListener("click", () => {
+  const focused = $("app").classList.toggle("focus-view");
+  $("focus-view").setAttribute("aria-pressed", String(focused));
+  $("focus-view").textContent = focused ? "Exit Focus view" : "Focus view";
+});
+function updateVideoRatio() {
+  if (video.videoWidth && video.videoHeight && active) {
+    $("video-wrap").style.setProperty("--video-ratio", video.videoWidth / video.videoHeight);
+  }
+}
+video.addEventListener("resize", updateVideoRatio);
 const CAPTIONS = {
   happy: "A bright little moment.", sad: "No pressure to smile. Take your time.",
-  angry: "A pause is always okay.", surprised: "That?s an expressive look!",
+  angry: "A pause is always okay.", surprised: "That's an expressive look!",
   neutral: "A quiet expression counts too.", uncertain: "Not sure yet. Try facing the camera.",
 };
-let captionsMuted = false, lastCaptionAt = -Infinity, lastCaptionLabel = null;
+let captionsMuted = false, lastCaptionAt = -Infinity, crewLabel = null, captionTimer;
 for (const label of LABELS) {
   const tile = document.createElement("div");
   tile.className = "mascot-tile"; tile.dataset.label = label; tile.dataset.selected = "false";
+  tile.style.setProperty("--character-color", Mascots.colors[label]);
   const button = document.createElement("button"); button.type = "button";
   button.setAttribute("aria-label", `Greet the ${title(label)} character; does not select a result`);
   button.innerHTML = Mascots.svg(label, true) + `<strong>${title(label)}</strong>`;
@@ -828,24 +859,41 @@ for (const label of LABELS) {
 for (const selector of [".startup-crew", ".placeholder-crew"]) {
   document.querySelector(selector).innerHTML = ["sad", "happy", "surprised"].map((label) => Mascots.svg(label)).join("");
 }
+function hideCaption() {
+  clearTimeout(captionTimer);
+  $("caption").hidden = true; $("caption-text").textContent = "";
+  $("caption-idle").hidden = false;
+  $("caption-idle").textContent = captionsMuted
+    ? "Captions muted. Tap a character to greet it."
+    : "Characters are illustrations. Tap to greet, not select.";
+}
 function selectCrew(label) {
+  crewLabel = label;
   for (const tile of document.querySelectorAll(".mascot-tile")) {
     const selected = tile.dataset.label === label;
     tile.dataset.selected = String(selected);
     tile.querySelector("button").setAttribute("aria-label", `${title(tile.dataset.label)} character${selected ? ", current estimate" : ""}; tap to greet, not select`);
   }
-  if (!label) { $("caption").hidden = true; lastCaptionLabel = null; return; }
-  if (!captionsMuted && label !== lastCaptionLabel && performance.now() - lastCaptionAt >= 10000) {
+  $("crew-selection").textContent = LABELS.includes(label) ? `Current estimate: ${title(label)}` : "No character selected";
+  hideCaption();
+  if (captionsMuted || !LABELS.includes(label)) return;
+  // Replace stale captions immediately; delay the new one without moving the layout.
+  const showCaption = () => {
+    if (captionsMuted || crewLabel !== label || document.hidden) return;
     $("caption-text").textContent = CAPTIONS[label]; $("caption").hidden = false;
-    lastCaptionAt = performance.now(); lastCaptionLabel = label;
-  }
+    $("caption-idle").hidden = true; lastCaptionAt = performance.now();
+  };
+  const remaining = Math.max(0, 10000 - (performance.now() - lastCaptionAt));
+  if (remaining) captionTimer = setTimeout(showCaption, remaining);
+  else showCaption();
 }
-$("caption-dismiss").addEventListener("click", () => { $("caption").hidden = true; });
+$("caption-dismiss").addEventListener("click", hideCaption);
 $("caption-mute").addEventListener("click", () => {
   captionsMuted = !captionsMuted;
   $("caption-mute").setAttribute("aria-pressed", String(captionsMuted));
   $("caption-mute").textContent = captionsMuted ? "Captions muted" : "Mute captions";
-  if (captionsMuted) $("caption").hidden = true;
+  if (captionsMuted) hideCaption();
+  else selectCrew(crewLabel);
 });
 let pointerFrame = null, pointerX = 0, pointerY = 0;
 function resetPupils() {
@@ -901,7 +949,7 @@ function resetResult(label = "Ready when you are") {
   $("empty-symbol").hidden = false;
   if ($("result-label").textContent !== label) $("result-label").textContent = label;
   $("confidence").textContent = "No estimate yet";
-  $("result-art").replaceChildren(); selectCrew(null);
+  $("result-art").replaceChildren(); $("result-art").classList.remove("pop"); selectCrew(null);
   bars(); context.clearRect(0, 0, overlay.width, overlay.height);
 }
 async function requestJSON(path, options = {}, timeout = 10000) {
@@ -967,7 +1015,7 @@ function stopCamera(label = "Idle", message = "Camera stopped. Start again when 
   stream = null; video.pause(); video.srcObject = null; video.hidden = true;
   capture.width = 0; capture.height = 0;
   overlay.width = 0; overlay.height = 0;
-  $("video-wrap").style.aspectRatio = "";
+  $("video-wrap").style.removeProperty("--video-ratio");
   $("camera-placeholder").hidden = false; $("video-loading").hidden = true;
   $("preview-note").hidden = true; $("camera-badge").textContent = "Camera off";
   $("stop-camera").disabled = true; $("start-camera").disabled = !ready;
@@ -1001,7 +1049,7 @@ async function startCamera() {
     await video.play();
     if (token !== session) return;
     if (!video.videoWidth || !video.videoHeight) throw new Error("invalid_video");
-    $("video-wrap").style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;
+    updateVideoRatio();
     video.hidden = false; $("camera-placeholder").hidden = true;
     $("video-loading-text").textContent = "Waiting for the first local analysis…";
     $("preview-note").hidden = false;
@@ -1082,6 +1130,8 @@ function showResult(result) {
   $("empty-symbol").hidden = true; $("emoji").textContent = result.emoji;
   if (displayedLabel !== result.label) {
     $("result-art").innerHTML = Mascots.svg(result.label);
+    $("result-art").classList.remove("pop"); void $("result-art").offsetWidth;
+    $("result-art").classList.add("pop");
     selectCrew(result.label);
     $("emoji").classList.remove("pop"); void $("emoji").offsetWidth;
     $("emoji").classList.add("pop"); displayedLabel = result.label;
@@ -1091,7 +1141,7 @@ function showResult(result) {
   $("confidence").textContent = `${Math.round(result.confidence)}% top model score · Smoothed over ${history.length} frame${history.length === 1 ? "" : "s"}`;
   bars(result.scores);
   status(uncertain ? "Not sure" : "Face detected", uncertain
-    ? "The expression is unclear or outside the five supported categories."
+    ? "Expression unclear—take your time. It may be outside the five supported categories."
     : "Showing an automated estimate of the largest visible face.", uncertain ? "warning" : "active");
 }
 function drawBox(data, uncertain) {
@@ -1629,6 +1679,10 @@ Open **http://127.0.0.1:8000**. Do not open the HTML file directly. First warmup
 
 The cream-and-ink interface includes five original illustrated expression mascots. Their pupils follow the pointer within bounded movement, and the mascot matching a stable local result rises into view. Clicking a mascot only waves; it never changes a classification. No mascot is selected for uncertain or no-face results. Optional scripted captions can be dismissed or muted; they are not AI advice or statements about your feelings.
 
+The crew now lives inside the result panel beside the camera on desktop. The compact heading and collapsed **Show model scores** / **Optional cloud analysis** sections keep the current estimate, all five characters, and camera controls together. **Focus view** hides the introduction and secondary details without stopping the camera; **Exit Focus view** restores them and their previous expanded states. Stop, Photo card, the permanent estimate notice, and educational footer remain available. Short viewports and increased zoom may scroll normally instead of clipping content. On mobile, the result card stacks below the camera with a three-plus-two crew grid.
+
+The active mascot has an outline and check mark, plus a **Current estimate** text label. Captions clear immediately when the displayed expression changes; a matching caption waits for the ten-second cooldown. No-face and uncertain states clear the supported-crew selection. The video wrapper follows actual video dimensions, including stream-resolution changes, so the overlay shares the same bounds.
+
 Startup progress reports actual backend connection and model warmup. Start camera opens the participation notice; camera permission is requested only after agreement. Stop camera, page exit, and tab hiding release tracks. Reduce effects disables decorative motion for the session; system reduced-motion preferences are honored automatically. How it works expands the short guide.
 
 ## Local photo cards
@@ -1682,29 +1736,34 @@ Nunito and DM Sans are bundled locally under `frontend/fonts/Nunito-OFL.txt` and
 ## docs/UI_VERIFICATION.md
 
 ````markdown
-# Playful UI verification
+# Beside-camera crew verification
 
 ## Automated evidence
 
-Python: **103 passed**, with one Starlette/AnyIO deprecation warning. All three JavaScript files passed `node --check`. Browser checks used Chromium with an in-memory synthetic red/blue video stream and mocked expression/cloud responses. Real local no-face WebSocket and photo-snapshot endpoints were exercised. Real health/warmup passed during an earlier run of this redesign; the final browser run mocked startup to avoid repeating ML warmup. No live cloud inference was requested.
+Verified 2026-11-06 after moving the crew beside the camera. Python: **103 passed**, with one Starlette/AnyIO deprecation warning. All three JavaScript files passed `node --check`. Browser checks used Chromium with in-memory synthetic video and mocked expression/cloud responses. Real local no-face WebSocket and photo-snapshot endpoints were exercised. Startup was mocked in these layout runs; real health/warmup had passed during the earlier redesign. No live cloud inference was requested.
 
-Viewport checks covered 320, 375, 414, 768, 859, 860, 1024, and 1440 CSS pixels, including landscape dialog bounds. Tested desktop and modal states had no axe WCAG A/AA violations. This is not full accessibility certification.
+The camera controls, current expression, five-character crew, and permanent estimate notice fit together at desktop browser viewports **1280 x 720, 1366 x 768, and 1440 x 900** with default details collapsed. Idle checks also passed at 1024 x 768. Focus view preserved the running stream and previous details state. Caption tests checked immediate stale-text removal, delayed matching captions, dismissal/mute, and unchanged desktop card height.
+
+Viewport checks also covered 320, 375, 414, 768, 859, and 860 CSS pixels, including landscape dialogs. Tested desktop and modal states had no axe WCAG A/AA violations. This is not full accessibility certification. Short/effective zoom-size viewport checks confirm normal scrolling and no horizontal overflow; they do not replace manual browser zoom testing.
 
 - Character startup, actual task progress, inert app/camera until ready, session effects toggle, bounded cursor-following pupils, expandable guide: PASS
-- Startup health/warmup flow, no camera before consent, Escape cancellation, live synthetic-camera/no-face WS, Stop track cleanup, desktop axe, no external UI requests: PASS
+- Desktop idle crew and controls above fold at 1280x720/1366x768/1440x900/1024x768; focus view preserves details state without camera permission: PASS
+- Startup flow (mocked), no camera before consent, Escape cancellation, live synthetic-camera/no-face WS, Stop track cleanup, desktop axe, no external UI requests: PASS
 - 375px layout, reduced motion, dialog axe, focus containment, Cancel without camera: PASS
 - 320/375/414/768px overflow, single-line visible buttons, and dialog bounds (including landscape): PASS
 - Keyboard skip link, 859/860px grid breakpoint, long cloud text wrapping: PASS
 - Permission denied, missing camera, busy camera: PASS
 - Backend offline and model-loading failure: PASS
+- Live desktop crew above fold, matched video/overlay bounds and aspect, focus view preserves stream: PASS
 - Majority smoothing, newest tie, no-face reset, uncertain state, mirrored overlay, one-in-flight backpressure, disconnect cleanup: PASS
 - Simulated tab hiding, pagehide, and late permission after Stop all release tracks: PASS
 - Cloud defaults off; confirm/cancel/Escape; warning accessibility at 320/375/414/768px; one JPEG per confirmation; double-click guard; spinner; local pause/resume; no-face reset; 502 recovery; no retry; Stop ignores late response: PASS
 - Cloud Stop before JPEG encoding completes sends no request; tab hiding aborts pending cloud UI and releases tracks: PASS
 - Mascot selection, greet does not classify, caption cooldown/mute, no-face deselection: PASS
 - Photo consent/cancel, real local no-face blocking, exact capture JPEG, mirrored 1080x1350 PNG download, neutral/uncertain templates and filenames, Retake/Discard memory clearing, Stop/tab hiding ignore late capture: PASS
+- Portrait video + native stream dimension change retain overlay alignment; focus preserves tracks; short/effective zoom-size viewports scroll without horizontal overflow; Stop releases tracks: PASS
 
-Photo tests verified a mirrored 1080 x 1350 PNG from the exact captured JPEG, independent of the live smoothed result, including neutral and uncertain templates. Download test artifacts contain synthetic color blocks, not real webcam images. Backend tests cover consent/origin/type/size validation, no-face handling, error sanitization, current free-vision model validation, one outbound image attempt, zero-price provider controls, and cloud failure paths.
+Photo tests verified a mirrored 1080 x 1350 PNG from the exact captured JPEG, independent of the live smoothed result, including neutral and uncertain templates. Test image artifacts contain synthetic color blocks, not real webcam images. Backend tests cover consent/origin/type/size validation, no-face handling, error sanitization, current free-vision model validation, one outbound image attempt, zero-price provider controls, and cloud failure paths.
 
 ## Repeating checks
 
@@ -1725,8 +1784,8 @@ Use the manual sequence below for the real webcam. Automated browser checks were
 2. Stop the backend temporarily and verify the retry message. Restore it and retry.
 3. Try Reduce effects and system reduced motion; cursor-following pupils and decorative motion should stop.
 4. Cancel participation consent: no camera permission should be requested. Agree, then allow the camera and verify face-box alignment.
-5. Explore the five expressions; the stable matching mascot should rise. No face clears the result; uncertain selects no mascot.
-6. Click a mascot: it waves without changing the expression result. Mute or dismiss captions.
+5. Confirm that the crew is beside the camera on desktop and inside the result card on mobile. Toggle Focus view without restarting the stream; expand scores/cloud details after exiting. Explore the five expressions; the stable matching mascot should rise. No face clears the result; uncertain selects no mascot.
+6. Click a mascot: it waves without changing the expression result. Mute or dismiss captions. Change expressions during the caption cooldown: old text must clear immediately. Check browser zoom at 200% and allow normal scrolling.
 7. Open Photo card, cancel, and verify nothing was captured. Reopen, consent, capture, inspect the mirrored preview, and explicitly download if desired.
 8. Try Retake, Discard, Stop inside the dialog, tab hiding, and page exit. Confirm camera release and preview clearing. A downloaded file remains under the user's control.
 9. Check camera permission denied, no camera, and another app holding the device.
