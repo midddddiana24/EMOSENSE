@@ -1,8 +1,8 @@
-# Beside-camera crew verification
+# Oversized peeking crew verification
 
 ## Automated evidence
 
-Verified 2026-11-06 after moving the crew beside the camera. Python: **103 passed**, with one Starlette/AnyIO deprecation warning. All three JavaScript files passed `node --check`. Browser checks used Chromium with in-memory synthetic video and mocked expression/cloud responses. Real local no-face WebSocket and photo-snapshot endpoints were exercised. Startup was mocked in these layout runs; real health/warmup had passed during the earlier redesign. No live cloud inference was requested.
+Verified 2026-11-06 after replacing the small crew thumbnails with oversized peeking faces. Python: **103 passed**, with one Starlette/AnyIO deprecation warning. All three JavaScript files passed `node --check`. Browser checks used Chromium with in-memory synthetic video and mocked expression/cloud responses. Real local no-face WebSocket and photo-snapshot endpoints were exercised. Startup was mocked in these layout runs; real health/warmup had passed during the earlier redesign. No live cloud inference was requested.
 
 The camera controls, current expression, five-character crew, and permanent estimate notice fit together at desktop browser viewports **1280 x 720, 1366 x 768, and 1440 x 900** with default details collapsed. Idle checks also passed at 1024 x 768. Focus view preserved the running stream and previous details state. Caption tests checked immediate stale-text removal, delayed matching captions, dismissal/mute, and unchanged desktop card height.
 
@@ -27,6 +27,14 @@ Viewport checks also covered 320, 375, 414, 768, 859, and 860 CSS pixels, includ
 
 Photo tests verified a mirrored 1080 x 1350 PNG from the exact captured JPEG, independent of the live smoothed result, including neutral and uncertain templates. Test image artifacts contain synthetic color blocks, not real webcam images. Backend tests cover consent/origin/type/size validation, no-face handling, error sanitization, current free-vision model validation, one outbound image attempt, zero-price provider controls, and cloud failure paths.
 
+## Peeking-stage checks
+
+`node scripts/test_peek_stage.cjs` passed using Chromium and synthetic video. The script was first observed failing because the stage did not exist, then passed after implementation. It checks all five oversized selected poses, single selection, no replay on identical results, settling after rapid changes, greeting isolation, desktop visibility at 1280 x 720 / 1366 x 768 / 1440 x 900, mobile stage sizing, keyboard access, focus-view stream retention, no-face/uncertain/Stop/tab-hide clearing, and axe WCAG A/AA. Reduced-motion checks include zero-duration transitions, disabled blinking, and pupil transforms remaining reset after pointer movement.
+
+The complete earlier UI/photo regression suite was adapted to the new stage and passed again, including real local no-face WebSocket and snapshot routes, neutral/uncertain PNG downloads with the new full SVG artwork, mirrored pixel checks, Retake/Discard memory clearing, and ignoring late results after Stop/tab hiding. Provider requests were mocked; no face was sent to an external AI service. A separate code reviewer found no important issue in the changed UI and lifecycle code.
+
+Preview images in `.tools/peek-stage` are generated from mocked protocol results and synthetic video. They demonstrate layout and animation states, not model accuracy. The local reference image remains untracked and is not an application asset.
+
 ## Repeating checks
 
 From the repository root on Windows:
@@ -46,7 +54,7 @@ Use the manual sequence below for the real webcam. Automated browser checks were
 2. Stop the backend temporarily and verify the retry message. Restore it and retry.
 3. Try Reduce effects and system reduced motion; cursor-following pupils and decorative motion should stop.
 4. Cancel participation consent: no camera permission should be requested. Agree, then allow the camera and verify face-box alignment.
-5. Confirm that the crew is beside the camera on desktop and inside the result card on mobile. Toggle Focus view without restarting the stream; expand scores/cloud details after exiting. Explore the five expressions; the stable matching mascot should rise. No face clears the result; uncertain selects no mascot.
+5. Confirm that five large faces peek over the stage edge and only the detected supported expression rises. The labeled greeting buttons must not change the result. Confirm that the stage is beside the camera on desktop and inside the result card on mobile. Toggle Focus view without restarting the stream; expand scores/cloud details after exiting. Explore the five expressions; the stable matching mascot should rise. No face clears the result; uncertain selects no mascot.
 6. Click a mascot: it waves without changing the expression result. Mute or dismiss captions. Change expressions during the caption cooldown: old text must clear immediately. Check browser zoom at 200% and allow normal scrolling.
 7. Open Photo card, cancel, and verify nothing was captured. Reopen, consent, capture, inspect the mirrored preview, and explicitly download if desired.
 8. Try Retake, Discard, Stop inside the dialog, tab hiding, and page exit. Confirm camera release and preview clearing. A downloaded file remains under the user's control.

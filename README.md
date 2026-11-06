@@ -46,11 +46,11 @@ macOS/Linux:
 
 Open **http://127.0.0.1:8000**. Do not open the HTML file directly. First warmup may download model weights into DeepFace's cache; frames are never cached. An optional `DEEPFACE_HOME` environment variable changes the model-cache location. Keep the terminal open; Ctrl+C stops the server.
 
-The cream-and-ink interface includes five original illustrated expression mascots. Their pupils follow the pointer within bounded movement, and the mascot matching a stable local result rises into view. Clicking a mascot only waves; it never changes a classification. No mascot is selected for uncertain or no-face results. Optional scripted captions can be dismissed or muted; they are not AI advice or statements about your feelings.
+The cream-and-ink interface includes five original illustrated expression mascots with oversized eyes and rounded faces. They peek over the bottom edge of a cropped result-panel stage. Their pupils follow the pointer within bounded movement; the mascot matching a stable local result rises and enlarges in a single 400ms transition. Repeated identical results do not restart it. Use the labeled greeting buttons to wave without changing a classification. No mascot is selected for uncertain or no-face results. Optional scripted captions can be dismissed or muted; they are not AI advice or statements about your feelings.
 
-The crew now lives inside the result panel beside the camera on desktop. The compact heading and collapsed **Show model scores** / **Optional cloud analysis** sections keep the current estimate, all five characters, and camera controls together. **Focus view** hides the introduction and secondary details without stopping the camera; **Exit Focus view** restores them and their previous expanded states. Stop, Photo card, the permanent estimate notice, and educational footer remain available. Short viewports and increased zoom may scroll normally instead of clipping content. On mobile, the result card stacks below the camera with a three-plus-two crew grid.
+The crew lives inside the result panel beside the camera on desktop. The stage reserves 224px, or 192px on mobile and at viewport heights up to 768px. On shorter desktops the header is compacted to retain the camera controls, crew, and notice together. The compact heading and collapsed **Show model scores** / **Optional cloud analysis** sections keep the current estimate, all five characters, and camera controls together. **Focus view** hides the introduction and secondary details without stopping the camera; **Exit Focus view** restores them and their previous expanded states. Stop, Photo card, the permanent estimate notice, and educational footer remain available. Short viewports and increased zoom may scroll normally instead of clipping content. On mobile, the result card stacks below the camera, with the peeking scene above a three-plus-two layout of greeting buttons.
 
-The active mascot has an outline and check mark, plus a **Current estimate** text label. Captions clear immediately when the displayed expression changes; a matching caption waits for the ten-second cooldown. No-face and uncertain states clear the supported-crew selection. The video wrapper follows actual video dimensions, including stream-resolution changes, so the overlay shares the same bounds.
+The active mascot has a colored highlight and check mark, plus a **Current estimate** text label. Cropped artwork is decorative; greeting buttons keep their labels and keyboard focus outside the crop. Reduced motion applies the selected pose without rising, scaling transitions, blinking, or pointer tracking. Captions clear immediately when the displayed expression changes; a matching caption waits for the ten-second cooldown. No-face and uncertain states clear the supported-crew selection. The video wrapper follows actual video dimensions, including stream-resolution changes, so the overlay shares the same bounds. Startup and photo cards share the new illustrations; exported mascots are not cropped by the peeking stage.
 
 Startup progress reports actual backend connection and model warmup. Start camera opens the participation notice; camera permission is requested only after agreement. Stop camera, page exit, and tab hiding release tracks. Reduce effects disables decorative motion for the session; system reduced-motion preferences are honored automatically. How it works expands the short guide.
 
@@ -80,6 +80,16 @@ Windows, from the repository root:
 ```
 
 On macOS/Linux substitute `./venv/bin/python`. The WebSocket check requires a running server. To check an existing consented/authorized photo, run `python scripts/test_photo.py "path/to/photo.jpg"` using the virtual environment interpreter. These helpers never write images.
+
+Optional UI regression check (Node.js is needed for development testing only; the app still has no frontend build step):
+
+```powershell
+npm install --prefix .tools/browser-check playwright@1.58.2 @axe-core/playwright@4.11.0
+node .tools/browser-check/node_modules/playwright/cli.js install chromium
+node scripts/test_peek_stage.cjs
+```
+
+This self-contained check mocks startup/analysis and supplies synthetic video. It checks all five rising poses, stable/rapid result changes, greeting isolation, desktop visibility, mobile sizing, focus view, reduced motion, no-face/uncertain clearing, Stop/tab-hide cleanup, keyboard access, and axe. Preview artifacts go to the ignored `.tools/peek-stage` folder. They are not real inference evidence. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` only if using a custom installed Chromium binary.
 
 ## Troubleshooting
 

@@ -50,18 +50,28 @@ const CAPTIONS = {
   neutral: "A quiet expression counts too.", uncertain: "Not sure yet. Try facing the camera.",
 };
 let captionsMuted = false, lastCaptionAt = -Infinity, crewLabel = null, captionTimer;
-for (const label of LABELS) {
+for (const [index, label] of LABELS.entries()) {
   const tile = document.createElement("div");
   tile.className = "mascot-tile"; tile.dataset.label = label; tile.dataset.selected = "false";
   tile.style.setProperty("--character-color", Mascots.colors[label]);
-  const button = document.createElement("button"); button.type = "button";
+  tile.style.setProperty("--slot", index);
+  tile.style.setProperty("--tilt", `${[-9, 6, -4, 8, -6][index]}deg`);
+  tile.innerHTML = `<div class="mascot-pose">${Mascots.svg(label, true)}<span class="mascot-check">&#10003;</span></div>`;
+  const button = document.createElement("button"); button.type = "button"; button.dataset.label = label;
   button.setAttribute("aria-label", `Greet the ${title(label)} character; does not select a result`);
-  button.innerHTML = Mascots.svg(label, true) + `<strong>${title(label)}</strong>`;
+  button.textContent = title(label);
   button.addEventListener("click", () => {
     tile.classList.remove("waving"); void tile.offsetWidth; tile.classList.add("waving");
   });
-  tile.append(button); $("mascot-crew").append(tile);
+  $("mascot-crew").append(tile); $("crew-greetings").append(button);
 }
+const stageObserver = new ResizeObserver(([entry]) => {
+  const { width, height } = entry.contentRect;
+  if (!height) return;
+  $("crew-stage").style.setProperty("--rest-scale", Math.min(.8, width / 5 * 1.45 / height));
+  $("crew-stage").style.setProperty("--edge-shift", `${Math.max(0, height / 2 - width / 10 - 8)}px`);
+});
+stageObserver.observe($("crew-stage"));
 for (const selector of [".startup-crew", ".placeholder-crew"]) {
   document.querySelector(selector).innerHTML = ["sad", "happy", "surprised"].map((label) => Mascots.svg(label)).join("");
 }
@@ -78,8 +88,11 @@ function selectCrew(label) {
   for (const tile of document.querySelectorAll(".mascot-tile")) {
     const selected = tile.dataset.label === label;
     tile.dataset.selected = String(selected);
-    tile.querySelector("button").setAttribute("aria-label", `${title(tile.dataset.label)} character${selected ? ", current estimate" : ""}; tap to greet, not select`);
+    const button = $("crew-greetings").querySelector(`[data-label="${tile.dataset.label}"]`);
+    button.dataset.selected = String(selected);
+    button.setAttribute("aria-label", `${title(tile.dataset.label)} character${selected ? ", current estimate" : ""}; tap to greet, not select`);
   }
+  $("crew-stage").dataset.activeLabel = LABELS.includes(label) ? label : "";
   $("crew-selection").textContent = LABELS.includes(label) ? `Current estimate: ${title(label)}` : "No character selected";
   hideCaption();
   if (captionsMuted || !LABELS.includes(label)) return;
@@ -97,7 +110,8 @@ $("caption-dismiss").addEventListener("click", hideCaption);
 $("caption-mute").addEventListener("click", () => {
   captionsMuted = !captionsMuted;
   $("caption-mute").setAttribute("aria-pressed", String(captionsMuted));
-  $("caption-mute").textContent = captionsMuted ? "Captions muted" : "Mute captions";
+  $("caption-mute").textContent = captionsMuted ? "Unmute" : "Mute";
+  $("caption-mute").setAttribute("aria-label", captionsMuted ? "Unmute captions" : "Mute captions");
   if (captionsMuted) hideCaption();
   else selectCrew(crewLabel);
 });
@@ -155,7 +169,7 @@ function resetResult(label = "Ready when you are") {
   $("empty-symbol").hidden = false;
   if ($("result-label").textContent !== label) $("result-label").textContent = label;
   $("confidence").textContent = "No estimate yet";
-  $("result-art").replaceChildren(); $("result-art").classList.remove("pop"); selectCrew(null);
+  selectCrew(null);
   bars(); context.clearRect(0, 0, overlay.width, overlay.height);
 }
 async function requestJSON(path, options = {}, timeout = 10000) {
@@ -335,9 +349,6 @@ function showResult(result) {
   const uncertain = result.label === "uncertain";
   $("empty-symbol").hidden = true; $("emoji").textContent = result.emoji;
   if (displayedLabel !== result.label) {
-    $("result-art").innerHTML = Mascots.svg(result.label);
-    $("result-art").classList.remove("pop"); void $("result-art").offsetWidth;
-    $("result-art").classList.add("pop");
     selectCrew(result.label);
     $("emoji").classList.remove("pop"); void $("emoji").offsetWidth;
     $("emoji").classList.add("pop"); displayedLabel = result.label;

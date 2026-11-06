@@ -49,7 +49,7 @@ const PhotoCards = (() => {
     ctx.translate(64 + 952, 240); ctx.scale(-1, 1);
     ctx.drawImage(bitmap, (952 - w) / 2, (660 - h) / 2, w, h); ctx.restore();
     ctx.strokeStyle = ink; ctx.lineWidth = 6; ctx.beginPath(); ctx.roundRect(64, 240, 952, 660, 24); ctx.stroke();
-    ctx.drawImage(art, 700, 940, 300, 270);
+    ctx.drawImage(art, 730, 940, 270, 270);
     ctx.fillStyle = ink; ctx.font = '900 48px Nunito'; ctx.fillText("A little expression.", 64, 1010);
     ctx.fillText("A whole lot of you.", 64, 1070);
     ctx.font = '400 26px "DM Sans"'; ctx.fillText("Visible-expression estimate, not your feelings.", 64, 1240);

@@ -4,23 +4,23 @@
 const Mascots = (() => {
   const colors = { happy: "#FFD83D", sad: "#6BAAF5", angry: "#FF7868", surprised: "#AF91F2", neutral: "#86B99A", uncertain: "#DDD7C9" };
   const bodies = {
-    happy: "M39 45Q30 20 58 27Q73 8 92 25Q116 12 130 31Q161 25 159 57L163 111Q161 143 131 141L65 146Q34 141 37 115Z",
-    sad: "M49 54Q61 33 92 16Q103 11 109 25Q117 46 145 60Q165 77 158 113Q153 144 116 146L71 144Q37 139 38 110Q37 81 49 54Z",
-    angry: "M43 36Q41 22 56 24L78 29Q100 18 122 29L145 24Q159 22 157 39L164 117Q165 143 139 143L59 143Q33 142 37 116Z",
-    surprised: "M67 30Q73 10 89 24Q108 5 119 29Q145 18 145 43Q174 45 158 70Q180 91 158 105Q166 136 138 132Q128 155 106 140Q80 156 66 136Q38 142 42 114Q18 101 37 81Q18 54 46 46Q42 23 67 30Z",
-    neutral: "M48 48Q63 12 99 23Q144 18 155 55L158 116Q150 146 118 144L71 144Q32 140 36 108Z",
+    happy: "M16 58Q12 20 49 23Q62 5 85 20Q107 7 130 21Q172 8 182 48L185 158Q183 189 151 189L48 191Q16 190 15 157Z",
+    sad: "M29 66Q47 42 78 16Q98 0 114 23Q124 45 154 57Q184 72 184 116L181 157Q176 189 145 190L49 190Q17 189 16 156Q8 103 29 66Z",
+    angry: "M17 40Q14 18 40 22L68 28Q99 9 131 27L162 21Q184 17 183 41L187 157Q190 190 155 190L46 190Q10 190 14 156Z",
+    surprised: "M48 30Q55 7 77 22Q96 1 116 23Q146 7 152 33Q181 26 180 56Q203 70 184 94Q201 119 182 136Q185 171 159 174Q145 201 119 181Q96 201 75 182Q43 201 35 173Q7 175 18 144Q-2 128 16 106Q-2 83 18 65Q8 35 48 30Z",
+    neutral: "M20 62Q27 19 65 21Q92 8 123 21Q172 14 181 61L185 155Q181 189 144 190L49 190Q14 188 15 153Z",
   };
   const mouths = {
-    happy: '<path d="M72 101Q99 130 128 99Q100 107 72 101Z" fill="#171717"/><path d="M84 108Q99 111 115 106" stroke="#FFF8E7" stroke-width="6"/>',
-    sad: '<path d="M78 116Q100 96 123 115"/>',
-    angry: '<path d="m78 111 13-5 13 5 13-5 9 5"/><path d="m61 54 24 8m30 0 23-8"/>',
-    surprised: '<ellipse cx="101" cy="112" rx="12" ry="17" fill="#171717"/>',
-    neutral: '<path d="M82 111h37"/>',
-    uncertain: '<path d="M82 115q18-9 37 0"/>',
+    happy: '<path d="M54 118Q100 143 147 117Q143 166 101 166Q61 165 54 118Z" fill="#171717"/><path d="M62 125Q101 143 140 124L135 139Q101 151 67 139Z" fill="#FFFDF7" stroke="none"/>',
+    sad: '<path d="M67 143Q100 116 134 144"/><path d="m40 48 28-9m64 0 28 9" stroke-width="5"/>',
+    angry: '<path d="m65 141 17-7 18 7 18-7 17 7"/><path d="m39 43 34 13m54 0 34-13" stroke-width="7"/>',
+    surprised: '<ellipse cx="101" cy="143" rx="20" ry="27" fill="#171717"/><path d="M89 161q13-9 25 0" stroke="#FF7868" stroke-width="8"/>',
+    neutral: '<path d="M72 139q29 6 58 0"/>',
+    uncertain: '<path d="M72 145q28-15 58 0m-93-99 31-7m66-8 26 15"/>',
   };
   function svg(label, track = false) {
     const kind = colors[label] ? label : "neutral";
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180" aria-hidden="true" focusable="false"><g stroke="#171717" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="m42 95-19 7-9-12m143 9 17 9 12-12M73 141l-4 17H53m75-17 6 17h16" fill="none"/><path d="${bodies[kind] || bodies.neutral}" fill="${colors[kind]}"/><g class="mascot-eyes"><ellipse cx="76" cy="77" rx="15" ry="20" fill="#FFFDF7"/><ellipse cx="123" cy="77" rx="15" ry="20" fill="#FFFDF7"/><g class="${track ? "pupils" : "export-pupils"}" stroke="none" fill="#171717"><ellipse cx="78" cy="80" rx="6" ry="9"/><ellipse cx="125" cy="80" rx="6" ry="9"/></g></g><g fill="none">${mouths[kind]}</g></g></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false"><path d="${bodies[kind] || bodies.neutral}" fill="${colors[kind]}" stroke="#171717" stroke-width="3" stroke-linejoin="round"/><g class="mascot-eyes"><ellipse cx="65" cy="84" rx="26" ry="32" fill="#FFFDF7"/><ellipse cx="137" cy="84" rx="26" ry="32" fill="#FFFDF7"/><g class="${track ? "pupils" : "export-pupils"}" fill="#171717"><ellipse cx="69" cy="87" rx="13" ry="20"/><ellipse cx="141" cy="87" rx="13" ry="20"/></g></g><g fill="none" stroke="#171717" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">${mouths[kind]}</g></svg>`;
   }
   return { colors, svg };
 })();
